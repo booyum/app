@@ -31,3 +31,6 @@
 # Debug files
 *.dSYM/
 *.su
+
+# unix sockets
+unix_socket
