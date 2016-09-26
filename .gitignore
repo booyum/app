@@ -34,3 +34,16 @@
 
 # unix sockets
 unix_socket
+
+#log file
+log
+
+#program files
+guiBin
+App
+
+#orthogonal files
+Makefile
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
