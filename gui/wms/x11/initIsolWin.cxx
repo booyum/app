@@ -57,9 +57,20 @@ static int forkXephyr(void) //todo grab Xephyr location from settings file
   
   /* This is the child */
   if( ret == 0 ){
+  
+    /* We don't want Xephyr to output to stderr, it will complain about the 
+     * inability to use mit-shm which is a desired result of using IPC 
+     * namespace isolation, so not actually an error 
+     */
+    if( !freopen("/dev/null", "w", stderr) ){
+      printf("Error: Failed to silence Xephyr output to stderr");
+      exit(-1); 
+    }
+    
+    /* Initialize the Xephyr SECCOMP whitelist */
     if( !seccompWl() ){
       printf("Error: Failed to initialize SECCOMP for isolated window\n");
-      return 0; 
+      exit(-1);  
     }
     
     if( execve("/usr/bin/Xephyr", xephyrCmd, xephyrEnv) == -1 ){

@@ -26,7 +26,7 @@ int secto_cast_long2_sizet(long x);
 int secto_cast_int2_sizet(int x);
 int secto_sizet_add_nowrap(size_t x, size_t y);
 int secto_sizet_mul_nowrap(size_t x, size_t y);
-int secto_add_int(int x, int y);
+int secto_add_int(signed int x, signed int y);
 int secto_add_uint(unsigned int x, unsigned int y);
 
 /**************************SYSTEM SECURITY FUNCTIONS***************************/

@@ -482,12 +482,12 @@ inline int secto_sizet_mul_nowrap(size_t x, size_t y)
   return (SIZE_MAX / x) >= y;  
 }
 
-/* secto_add_int determines if it is safe to add the int x to the int y, without
+/* secto_add_int determines if it is safe to add the signed int x to the signed int y, without
  * overflowing. 
  *
  * Returns 0 if the addition operation will overflow, 1 if it will not.
  */ 
-inline int secto_add_int(int x, int y)
+inline int secto_add_int(signed int x, signed int y)
 {
   if(x > 0 && x > INT_MAX - y) return 0;
   if(x < 0 && y < INT_MIN - x) return 0;

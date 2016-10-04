@@ -30,6 +30,11 @@ ENDIF(LINUX)
 IF(LINUX)
   list  (APPEND gui_sources 
         "gui/modules/os/linux/sandbox/isolKern.cxx"
+        "gui/modules/os/linux/sandbox/isolNet.cxx"
+        "gui/modules/os/linux/sandbox/isolFs.cxx"
+        "gui/modules/os/linux/sandbox/isolName.cxx"
+        "gui/modules/os/linux/sandbox/isolProc.cxx"
+        "gui/modules/os/linux/sandbox/isolIpc.cxx"
         )
 ENDIF(LINUX)
 

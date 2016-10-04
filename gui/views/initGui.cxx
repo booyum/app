@@ -5,8 +5,6 @@
 
 #include "initGui.h"
 
-
-
 /* GUI Prototypes */
 static void startWindow(void);
 static int resize(int a);
