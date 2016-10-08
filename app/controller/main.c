@@ -7,6 +7,7 @@
 #include "isolName.h"
 #include "isolIpc.h" 
 #include "isolNet.h"
+#include "isolGui.h"
 
 #include "security.h"
 #include "logger.h"
@@ -25,7 +26,10 @@ int main()
     return 0;
   }
 
-/* TODO READD GUI ISOLATION */ 
+  if( !isolGui() ){
+    logErr("Failed to isolate the GUI");
+    return 0; 
+  }
 
   /* Isolate the process and resume execution at initialize */ 
   isolProc(&initialize);
@@ -85,58 +89,6 @@ static int initialize()
 
 static int isolatedMain(void)
 {
-  unsigned char *buff = secAlloc(1000); 
-
-
-  logMsg("TEST"); 
-
-  routerObj *testRouter = newRouter();
-  if( testRouter == NULL ){
-    logErr("Failed to make test router new");
-    return -1;
-  }
-
-  if( !testRouter->methods->torConnect(testRouter) ){
-    logErr("Failed to make ipv4 connection");
-    return -1;
-  }
-  
-  
-  if( !testRouter->methods->socks5Relay(testRouter, "ruger.com", strlen("ruger.com"), 80) ){
-    logErr("Failed to handshake");
-    return -1; 
-  } 
-    
-   
-    
-  if( !testRouter->methods->transmit(testRouter, "GET /index.html HTTP/1.1\r\nHost: ruger.com\n\n", 
-                                     strlen("GET /index.html HTTP/1.1\r\nHost: ruger.com\n\n") )){
-                                       logErr("transmit failed");
-                                       return 0; 
-                                     }
-                                                                     
-  if( !testRouter->methods->receive(testRouter, buff, 10) ){
-    logErr("Failed to receive bytes");
-    return -1;
-  } 
-  
-    printf("ret: %s\n", buff); 
-  fflush(stdout);
-  
-    if( !testRouter->methods->transmit(testRouter, "GET /index.html HTTP/1.1\r\nHost: ruger.com\n\n", 
-                                     strlen("GET /index.html HTTP/1.1\r\nHost: ruger.com\n\n") )){
-                                       logErr("transmit failed");
-                                       return 0; 
-                                     }
-                                     
-                                       if( !testRouter->methods->receive(testRouter, buff, 10) ){
-    logErr("Failed to receive bytes");
-    return -1;
-  } 
-  
-  printf("ret: %s\n", buff); 
-  fflush(stdout);
-  
   
   return 0;
 }

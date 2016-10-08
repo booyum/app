@@ -1,0 +1,12 @@
+nosuid cannot be set on the mount point from which the binary is executed,
+because this prevents capabilities from working. Unfortunately, this seems
+to mean that encrypted home partition from ubuntu cannot be used. 
+
+note: use ram disk for pivot_root so it is more dynamic 
+
+ensure all snprintfs are checking for truncation and negative returns 
+
+
+need  libxrandr-dev
+
+apt-get install libcap-dev

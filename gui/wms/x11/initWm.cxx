@@ -7,6 +7,8 @@
 #include <unistd.h> 
 
 #include "initWm.h"
+#include "isolFs.h"
+#include "isolKern.h"
 
 static void loopX(Display *dpy, Window root, int randrBase);
 
@@ -60,17 +62,17 @@ int initWm(int (*initGui)(void))
   
   /* Fork so we can start both the window manager and the GUI, neither of which
    * return
-   */ 
+   */
   switch(fork()){
     case -1:
       printf("Error: Forking to split GUI and WM failed\n");
       return 0; 
     case 0:
-      loopX(dpy, root, randrBase);
+      loopX(dpy, root, randrBase); /* never returns */
       printf("Error: Failed to initialize the window manager\n"); 
       exit(-1); 
     default:
-      initGui();
+      initGui(); /* never returns */ 
       printf("Error: Failed to initialize the GUI\n");
       return 0; 
   }
@@ -83,6 +85,17 @@ int initWm(int (*initGui)(void))
 static void loopX(Display *dpy, Window root, int randrBase)
 {
   XEvent event; 
+  
+  /* Isolate the x display from the filesystem */ 
+  if( !isolFs(INIT_FSNS) ){
+    printf("Error: Failed to isolate the window manager from the filesystem\n");
+    return; 
+  }
+  
+  if( !isolKern() ){
+    printf("Error: Failed to isolate GUI from Kernel\n");
+    return; 
+  }
   
   /* Loop waiting for X11 events */ 
   while(1){

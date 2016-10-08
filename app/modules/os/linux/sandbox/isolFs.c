@@ -72,7 +72,7 @@ int isolFs(void)
    * directory. Essentially it will act as a chroot directory, after all other  
    * mount points are unmounted.
    */ 
-  if( mount(gIsolPath, gIsolPath, "ext4", MS_BIND, "rw,noexec") ){ 
+  if( mount(gIsolPath, gIsolPath, "ext4", MS_BIND | MS_NOEXEC, "rw,noexec") ){ 
     logErr("sandbox directory appears to be missing");
     return 0; 
   }

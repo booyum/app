@@ -2,15 +2,6 @@
 
 project(App)
 
-# Program interface declarations, which are simply header files, are stored in
-# the 'interfaces' directory, which is itself in the projects root directory. 
-# Adding interface directory with include_directories() allows for us to use the 
-# standard include quote syntax, even though the headers (which define interfaces) 
-# are not being stored in the same directories as the source files (which modularly 
-# define implementations). 
-include_directories(app/interfaces/sandbox)
-include_directories(app/interfaces/) 
-
 # The cross platform controller is always utilized
 list  (APPEND primary_sources 
       "app/controller/main.c"
@@ -39,6 +30,7 @@ IF (LINUX)
          "app/modules/os/linux/sandbox/isolName.c"
          "app/modules/os/linux/sandbox/isolNet.c"
          "app/modules/os/linux/sandbox/isolProc.c"
+         "app/modules/os/linux/sandbox/isolGui.c"
          "app/modules/os/unixLike/prng/prng.c"
          )
 ENDIF (LINUX)
@@ -62,6 +54,15 @@ ENDIF (OPENBSD)
 
 #set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 add_executable(App ${primary_sources})
+
+# Program interface declarations, which are simply header files, are stored in
+# the 'interfaces' directory, which is itself in the projects root directory. 
+# Adding interface directory with include_directories() allows for us to use the 
+# standard include quote syntax, even though the headers (which define interfaces) 
+# are not being stored in the same directories as the source files (which modularly 
+# define implementations). 
+target_include_directories(App PUBLIC app/interfaces/sandbox)
+target_include_directories(App PUBLIC app/interfaces) 
 
 # We want to make the App executable in the parent directory 
 set_target_properties( App

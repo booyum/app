@@ -28,23 +28,20 @@ int main()
     return -1;
   }
   
-  /* Don't need IPC (on Linux this prevents Xephyr from using mit-shm)*/
-  if( !isolIpc() ){
-    printf("Error: Failed to isolate from IPC\n");
-    return -1; 
-  }
-  
   /* Bring up the isolated Window */
   if( !initIsolWin() ){
     printf("Error: Failed to bring up an isolated window\n");
     return -1; 
   }
   
-  /* Initialize window manager and GUI Kernel isolation */ 
-  if( !isolKern() ){
-    printf("Error: Failed to isolate GUI from Kernel\n");
+  /* Allow the isolated window to use IPC, on Linux this allows to use MIT-SHM, 
+   * without which the GUI is very glitchy. 
+   */ 
+  if( !isolIpc() ){
+    printf("Error: Failed to isolate from IPC\n");
     return -1; 
   }
+  
   
   /* Initialize the window manager and GUI */ 
   if( !initWm(&initGui) ){
@@ -52,7 +49,7 @@ int main()
     return -1; 
   }
   
-  return 0; //never make it here
+  return 0; /* initWm should never return */ 
 }
 
 

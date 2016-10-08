@@ -7,10 +7,12 @@
 #include <string.h>
 
 #include "initIsolWin.h"
+#include "isolFs.h" 
 
 
 static int forkXephyr(void);
 static int seccompWl(void);
+static void isolXephyr(char *xephyrCmd[], char *xephyrEnv[]);
 
 static int setDisplayName(char *dOut, int dOutBc, char *lockStr , int lockStrBc);
 
@@ -34,8 +36,6 @@ int initIsolWin(void)
 
 static int forkXephyr(void) //todo grab Xephyr location from settings file
 {
-  pid_t ret;
-  uint16_t pollIters;
   char xDisplayName[100]; 
   char lockStr[100]; 
   
@@ -49,52 +49,94 @@ static int forkXephyr(void) //todo grab Xephyr location from settings file
     return 0; 
   }
   
-  ret = fork();
-  if( ret == -1 ){
-    printf("Error: Failed to fork off Xephyr\n");
-    return 0; 
-  }
   
-  /* This is the child */
-  if( ret == 0 ){
-  
-    /* We don't want Xephyr to output to stderr, it will complain about the 
-     * inability to use mit-shm which is a desired result of using IPC 
-     * namespace isolation, so not actually an error 
-     */
-    if( !freopen("/dev/null", "w", stderr) ){
-      printf("Error: Failed to silence Xephyr output to stderr");
-      exit(-1); 
+  switch( fork() ){
+    case -1:{
+      printf("Error: Failed to fork off Xephyr\n");
+      return 0;
     }
     
-    /* Initialize the Xephyr SECCOMP whitelist */
-    if( !seccompWl() ){
-      printf("Error: Failed to initialize SECCOMP for isolated window\n");
-      exit(-1);  
+    case 0:{
+      isolXephyr(xephyrCmd, xephyrEnv); /* This never returns */
+      printf("Error: Failed to isolate Xephyr\n");
+      return 0;
     }
     
-    if( execve("/usr/bin/Xephyr", xephyrCmd, xephyrEnv) == -1 ){
-      printf("Error: Failed to execve Xephyr\n");
-      exit(-1); 
+    default:{
+      if( setenv("DISPLAY", xDisplayName, 1) ){
+        printf("Error: Failed to set display environment var to xephyr display\n");
+        return 0;
+      }
+      break;
     }
   }
-  
-  /* This is the parent */ 
-  
-  
-  /* Set the environment variable of the display for this process */
-  if( setenv("DISPLAY", xDisplayName, 1) ){
-    printf("Error: Failed to set display environment to isolated display\n");
-    return 0; 
-  }
-  
-
   
   return 1; 
 }
 
+static void isolXephyr(char *xephyrCmd[], char *xephyrEnv[])
+{
+  /* Initialize a new mount namespace for Xephyr, we do this here so that after
+   * we execve to Xephyr we can then modify this same mount namespace to remove
+   * access to the filesystem. This is done after we execve so that dynamically
+   * linked libraries and such can be accessed ahead of time.    
+   */ 
+  if( unshare(CLONE_NEWNS) ){
+    printf("Failed to unshare the filesystem\n");
+    exit(-1);  
+  } 
+  
+  /* Now we fork again so that we can execve Xephyr and still modify the 
+   * previously created mount namespace
+   */
+  switch( fork() ){
+    /* Failed to fork, exit so no need to break */
+    case -1:{
+      printf("Error: Failed to fork for Xephyr\n");
+      exit(-1);
+    } 
+    
+    /* The child initializes the xephyr SECCOMP profile and execves xephyr,
+     * Note that this can never fall through so no need for break 
+     */ 
+    case 0:{
+     /* Initialize the Xephyr SECCOMP whitelist */
+      if( !seccompWl() ){
+        printf("Error: Failed to initialize SECCOMP for isolated window\n");
+        exit(-1);  
+      }
+     
+      if( execve("/usr/bin/Xephyr", xephyrCmd, xephyrEnv) == -1 ){
+        printf("Error: Failed to execve Xephyr\n");
+        exit(-1);
+      }
+    }
+    
+    /* The parent removes Xephyrs access to the filesystem */ 
+    default:{
+      /* This is the best method I've found for determining when Xephyr is ready 
+       * here, polling for filesystem changes isn't accurate enough, polling for
+       * ability to connect to the display causes problems in initWm.cxx when it
+       * tries to connect. TODO find a way to make this not disgusting. 
+       */
+      sleep(1); 
+      
+      if( !isolFs(NO_INIT_FSNS) ){
+        printf("Error: Failed to isolate Xephyr from the filesystem\n");
+        exit(-1); 
+      }
+      exit(0);
+    }
+  }
+  
+  /* We should never actually make it here */
+  printf("A part of code that shouldn't ever be reached was reached anyway\n");
+  exit(-1); 
+}
+
+
 /* setDisplayName writes a valid x11 display name to the buffer pointed to by
- * dOut. This will be a number 1..65535, prefixed with :, represented as an ASCII 
+ * dOut. This will be a number 1..65534, prefixed with :, represented as an ASCII 
  * character string, that is not currently in use, and which is valid for x11 
  * when using unix domain sockets (ie: -nolisten tcp).  
  *
@@ -126,7 +168,12 @@ static int setDisplayName( char *dOut, int dOutBc, char *lockStr, int lockStrBc)
    * written to the output buffer
    */ 
   do{
-    displayName++; //todo relying on wrap around maybe make this nicer? Should never ever matter. 
+    displayName++;
+    
+    if( displayName == 65535 ){
+      printf("Error: Tried an absurd number of display names and none worked\n");
+      return 0;
+    }
     
     /* Write the current display number to the output buffer with : prepended to it */ 
     checker = snprintf(dOut, dOutBc, ":%u", displayName);

@@ -59,5 +59,5 @@ endif (CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
 
 ################################################################################
 
-include("gui/guiCmake")
-include("app/appCmake")
+include("gui/gui.cmake")
+include("app/app.cmake")

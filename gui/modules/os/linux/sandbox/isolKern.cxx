@@ -3,6 +3,10 @@
 
 #include "isolKern.h"
 
+/* This SECCOMP profile is currently being used for both the window manager 
+ * and the GUI toolkit, however it can likely be fragmented into two independent
+ * profiles, TODO
+ */ 
 int isolKern(void)
 {
   scmp_filter_ctx filter;

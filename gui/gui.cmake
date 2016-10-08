@@ -2,14 +2,10 @@
 
 project (guiBin)
 
-
-include_directories(gui/interfaces/)
-include_directories(gui/interfaces/sandbox/)
-
 # The cross platform controller is always utilized
-list  (APPEND gui_sources 
-      "gui/controller/main.cxx"
-      )
+  list  (APPEND gui_sources 
+        "gui/controller/main.cxx"
+        )
 
 # The views are cross platform from FLTK 
   list  (APPEND gui_sources 
@@ -40,6 +36,10 @@ ENDIF(LINUX)
 
 
 add_executable(guiBin ${gui_sources})
+
+
+target_include_directories(guiBin PUBLIC gui/interfaces/)
+target_include_directories(guiBin PUBLIC gui/interfaces/sandbox/)
 
 # We want to make the gui executable in the bins directory 
 set_target_properties( guiBin
