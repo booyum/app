@@ -552,7 +552,7 @@ pid_t secClone(int (*execFunct)(void *), int flags)
   */
   stack = secAlloc(8388608) + 8388608;
   if( stack == NULL ){
-    logErr("Failed to allocate stack for isolated PID clone");
+    logErr("Failed to allocate stack for secclone");
     return -1; 
   }
 
