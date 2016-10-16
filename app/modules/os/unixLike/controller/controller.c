@@ -27,9 +27,9 @@ static int manageControl(int cpIncoming);
 static char *allocRandToken(void);
 
 
-static char          *sToken;
-static int           sListenSocket; 
-static int           sInitialized; 
+static char *sToken;
+static int  sListenSocket; 
+static int  sInitialized; 
 
 
 /* initializeController prepares the main application logic to receive control 
@@ -153,9 +153,7 @@ static char *allocRandToken(void)
 int manageControlPort(void)
 {
   int cpIncoming;
-  struct sockaddr_un remote;
-  socklen_t          structLen;
-  
+
   /* This should catch lack of, or failed, initialization */ 
   if( !sInitialized ){
     logErr("Attempt to manage control port without initialization detected");
@@ -165,8 +163,10 @@ int manageControlPort(void)
   /* Wait for connections to the control port, then manage them */ 
   while( 1 ){
     /* Get the incoming control port connection */ 
-    cpIncoming = accept(sListenSocket, (struct sockaddr *)&remote, &structLen);
+    cpIncoming = accept(sListenSocket, NULL, NULL);
     if( cpIncoming == -1){
+      printf("ACCEPT FAILED %i\n", errno);
+      fflush(stdout); 
       continue;
     }
     
@@ -180,12 +180,14 @@ int manageControlPort(void)
       
       /* The child handles this control session */
       case 0:{
+      
         /* Make sure the connecting control client knows the control port token */
         if( !authenticateCp(cpIncoming) ){
           logWrn("Controller tried authenticating with incorrect token");
           close(cpIncoming);
           exit(-1); 
         }
+        
         
         /* The control session has been authenticated, so let's manage it */
         if( !manageControl(cpIncoming) ){
@@ -248,16 +250,10 @@ static int authenticateCp(int cpIncoming)
   }
   
   /* Receive the authentication token */
-  int test = recv(cpIncoming, authAttempt, CONTROL_PORT_TOKEN_BC, 0);
-  if( test == -1 ){
-    printf("APP ERRNO RECV: %i\n", errno);
-    fflush(stdout);
-  }
-  printf("app recv btes: %i\n", test);
-  fflush(stdout); 
   
-  if( test != CONTROL_PORT_TOKEN_BC ){
+  if( recv(cpIncoming, authAttempt, CONTROL_PORT_TOKEN_BC, 0) != CONTROL_PORT_TOKEN_BC ){
     logWrn("Failed to get authentication token from client on control port");
+    fflush(stdout); 
     send( cpIncoming, &authFail, sizeof(authFail), 0);
     secFree((void**)&authAttempt, CONTROL_PORT_TOKEN_BC);
     return 0; 
@@ -278,6 +274,7 @@ static int authenticateCp(int cpIncoming)
   /* Send '1' to the client to signal authentication was with success */
   if( send( cpIncoming, &authSuccess, sizeof(authSuccess), 0) != sizeof(authSuccess) ){
     logErr("Failed to send token byte count over control socket\n");
+    fflush(stdout); 
     secFree((void**)&authAttempt, CONTROL_PORT_TOKEN_BC);
     return 0;
   } 

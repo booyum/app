@@ -91,7 +91,7 @@ static int establishConnection(void)
 /* First byte sent is byte count of token, followed by the token */ 
 static int cpAuthenticate(int sock)
 {
-  uint32_t authed    = 0;   
+  uint32_t authed = 0;   
   
   
   if( sock == -1 ){
@@ -101,22 +101,17 @@ static int cpAuthenticate(int sock)
   
   
   /* Transmit the token */
-  int ret =  send( sock, gToken, CONTROL_PORT_TOKEN_BC, 0);
-  printf("\nERR: %i\n", errno);
-  printf("SOCK %i\n", sock); 
-  if( ret != CONTROL_PORT_TOKEN_BC ){
+  if(  send( sock, gToken, CONTROL_PORT_TOKEN_BC, 0) != CONTROL_PORT_TOKEN_BC ){
     printf("Error: Failed to send the authentication token over control socket\n");
     return 0;
   }
   
-  int test = recv( sock, &authed, sizeof(authed), 0 );
-  if( test == -1) printf("ERR RECV: %i\n", errno); 
-  printf("recv bytesize %i\n", test); 
-  /* Receive authentication status */ 
-  if(  test != sizeof(authed) ){
+  /* receive authentication status */ 
+  if( recv( sock, &authed, sizeof(authed), 0 ) != sizeof(authed) ){
     printf("Error: Failed to receive control port authentication status\n");
-    return 0;
-  } 
+    return 0; 
+  }
+  
   
   authed = ntohl(authed);
   
