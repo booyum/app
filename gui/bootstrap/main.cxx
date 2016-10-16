@@ -6,16 +6,30 @@
 #include "initIsolWin.h" 
 #include "initWm.h"
 #include "initGui.h"
-
+#include "contPortCon.h" 
 #include "isolNet.h" 
 #include "isolName.h"
 #include "isolIpc.h" 
 #include "isolKern.h"
 
 
+
 /* Simple bootstrapper to initialize the window manager and GUI */ 
-int main()
+
+/* Enums for the positions of argv */
+enum{ CONT_PORT_TOKEN = 1 }; 
+
+/* For extern */ 
+static int gControlSocket = -1; 
+
+int main(int argc, char *argv[])
 {
+  
+  if( argc != 2 ){
+    printf("Error: Wrong number of arguments passed to the GUI main\n");
+    return -1; 
+  }
+  
   /* The isolated window, window manager, and GUI, do not need networking */ 
   if( !isolNet() ){
     printf("Error: Failed to isolate from the network\n"); 
@@ -42,6 +56,14 @@ int main()
     return -1; 
   }
   
+  /* Currently taking on faith that token is correct size TODO */ 
+  
+  /* Make the control port connection */
+  gControlSocket = initContPortCon( argv[CONT_PORT_TOKEN] );
+  if( gControlSocket == - 1){
+    printf("Error: Failed to get control socket\n");
+    return -1; 
+  } 
   
   /* Initialize the window manager and GUI */ 
   if( !initWm(&initGui) ){

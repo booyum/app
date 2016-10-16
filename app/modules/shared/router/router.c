@@ -377,7 +377,8 @@ static int socks5Relay(routerObj *this, char *addr, uint8_t addrBytesize, uint16
   return 1; 
 }
 
-/* torConnect establishes an ipv4 connection to to the socks proxy server 
+/* torConnect establishes a Unix Domain Socket to the redirector that connects
+ * to Tor. 
  *
  * Returns 0 on error, 1 on success. 
  */
@@ -415,7 +416,7 @@ static int torConnect(routerObj *this)
   int len; 
   struct sockaddr_un remote;
   remote.sun_family = AF_UNIX;
-    strcpy(remote.sun_path, "/unix_socket");
+    strcpy(remote.sun_path, "/tor_unix_socket");
     len = strlen(remote.sun_path) + sizeof(remote.sun_family);
   /* TODO TODO TODO */
   

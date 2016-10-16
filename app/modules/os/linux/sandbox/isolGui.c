@@ -4,9 +4,14 @@
 #include "isolGui.h"
 #include "logger.h" 
 
-int isolGui(void)
+int isolGui(const char *contPortToken)
 {
-  char *guiCmd[] = {"guiBin", NULL};
+  char *guiCmd[] = {"guiBin", contPortToken, NULL};
+  
+  if( contPortToken == NULL ){
+    logErr("Something was NULL that shouldn't have been");
+    return 0; 
+  }
   
   switch( fork() ){
     /* There was an error forking */ 
@@ -17,7 +22,7 @@ int isolGui(void)
     
     /* Child initializes the isolated GUI */
     case 0:{
-       if( execve("bins/guiBin", guiCmd, NULL) == -1 ){ //TODO pass a control port cookie as an environment variable
+       if( execve("bins/guiBin", guiCmd, NULL) == -1 ){ 
          logErr("Failed to execve the GUI");
          exit(-1);
        }

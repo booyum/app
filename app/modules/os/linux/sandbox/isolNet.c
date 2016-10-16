@@ -147,7 +147,7 @@ static int initRedirector()
   
   
   /* Begin listening on the Unix Domain Socket for connections from child NS */ 
-  unixListen = initUnixListen("/unix_socket", strlen("/unix_socket"));
+  unixListen = initUnixListen("/tor_unix_socket", strlen("/tor_unix_socket"));
   if( unixListen == -1 ){
     logErr("Failed to bind unix domain socket for redirector");
     return 0;
@@ -179,6 +179,7 @@ static void redirect(int unixListen)
   socklen_t          structLen;
   int                torSock; 
   void               *buff;
+  
   
   /* A pointer to this is used with the accept syscall */ 
   structLen = sizeof(struct sockaddr_un);

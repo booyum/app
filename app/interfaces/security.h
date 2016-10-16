@@ -20,6 +20,7 @@ int secFree(void **dataBuffer, size_t bytesize);
 char *secStrCpy(char *dst, char *src, size_t dstBytesize);
 int sec16ConstCmp(unsigned char *x, unsigned char *y);
 int sec32ConstCmp(unsigned char *x, unsigned char *y);
+int dataIndependentCmp(unsigned char *x, unsigned char *y, int n);
 
 /***********************INTEGER SECURITY FUNCTIONS*****************************/
 int secto_cast_long2_sizet(long x);

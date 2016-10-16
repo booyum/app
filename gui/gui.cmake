@@ -2,9 +2,9 @@
 
 project (guiBin)
 
-# The cross platform controller is always utilized
+# The cross platform bootstrapper is always utilized
   list  (APPEND gui_sources 
-        "gui/controller/main.cxx"
+        "gui/bootstrap/main.cxx"
         )
 
 # The views are cross platform from FLTK 
@@ -31,6 +31,7 @@ IF(LINUX)
         "gui/modules/os/linux/sandbox/isolName.cxx"
         "gui/modules/os/linux/sandbox/isolProc.cxx"
         "gui/modules/os/linux/sandbox/isolIpc.cxx"
+        "gui/modules/os/unixLike/contPortCon/contPortCon.cxx"
         )
 ENDIF(LINUX)
 

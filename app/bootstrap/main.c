@@ -13,22 +13,30 @@
 #include "logger.h"
 #include "prng.h" 
 #include "router.h" 
+#include "controller.h" 
+
 
 
 static int initialize();
-static int isolatedMain(void);
 
 int main()
 {
   /* Initialize the PRNG (note we must NOT be isolated into sandbox dir) */ 
   if( !initializePrng() ){
     logErr("Failed to initialize the PRNG");
-    return 0;
+    return -1;
   }
-
-  if( !isolGui() ){
+  
+  /* Initialize the controller, PRNG must be initialized */ //should this be after isolation?
+  if( !initializeController() ){
+    logErr("Failed to initialize the control port interface");
+    return -1; 
+  }
+  
+  /* Bring up the GUI, it is passed the control token and token byte count */
+  if( !isolGui( getToken() ) ){
     logErr("Failed to isolate the GUI");
-    return 0; 
+    return -1; 
   }
 
   /* Isolate the process and resume execution at initialize */ 
@@ -46,10 +54,10 @@ static int initialize()
  */ 
 
   /* Isolate the process to the sandbox directory (new root on Unix) */ 
-  if( !isolFs() ){
-    logErr("Failed to isolate the filesystem");
-    return 0; 
-  }
+/*  if( !isolFs() ){*/
+/*    logErr("Failed to isolate the filesystem");*/
+/*    return 0; */
+/*  }*/
 
   /* Initialize the logger (note that we must be isolated into sandbox dir) */
   if( !initLogFile("log") ){
@@ -75,23 +83,12 @@ static int initialize()
     return 0;
   }
   
-  
   /* Isolate the process from kernel functionality */ 
-  if( !isolKern() ){
-    logErr("Failed to isolate kernel functionality");
-    return 0; 
-  }
+/*  if( !isolKern() ){*/
+/*    logErr("Failed to isolate kernel functionality");*/
+/*    return 0; */
+/*  }*/
   
-  /* Begin the actual application logic from isolatedMain */ 
-  return isolatedMain(); 
-}
-
-
-static int isolatedMain(void)
-{
   
-  return 0;
+  return manageControlPort(); 
 }
-
-
-

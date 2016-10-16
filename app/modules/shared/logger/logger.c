@@ -7,15 +7,12 @@
 #include "logger.h"
 
 static FILE *gLogFile;
-static int  gLogFileFd;
-
 
 /* initLogger initializes the logging functions such that the macros logMsg,
  * logErr, logWrn, etc, can be utilized. It is passed the full path to the 
  * file to output the logs to. The logging functionality is implemented as 
- * a singleton object, however it is thread safe thanks to flock. Note that
- * reinitialization is not supported, so changing the log file path after 
- * initialization cannot be done.
+ * a singleton object. Note that reinitialization is not supported, so changing 
+ * the log file path after initialization cannot be done.
  *
  * Returns 0 on error, 1 on success. 
  */
@@ -37,13 +34,6 @@ int initLogFile(char *logFilePath)
   gLogFile = fopen(logFilePath, "a");
   if(gLogFile == NULL){
     printf("Failed to open logfile\n"); 
-    return 0;
-  }
-  
-  /* Get the file descriptor, this is used for some functions in loggerF */ 
-  gLogFileFd = fileno(gLogFile);
-  if( gLogFileFd == -1 ){
-    printf("Failed to get logfile FD, logging will fail\n");
     return 0;
   }
   
@@ -81,17 +71,7 @@ void loggerF(char *message, char *file, int line)
   if( gLogFile == NULL ){
     return;
   }
-    
-  /* Lock the log file such that if other threads attempt to access it they will
-   * block here until the lock is released
-   */
-  if( flock(gLogFileFd, LOCK_EX) ){
-    printf("Error: Failed to get lock to log file\n");
-    return;
-  }
   
-
-      
   /* Log the message to the log file */ 
   if( fprintf( gLogFile, "%s in %s : %i at %s\n", 
                message, file, line, timestamp ) 
@@ -101,12 +81,7 @@ void loggerF(char *message, char *file, int line)
   
   /* For some reason it is never writing to the file without this TODO */ 
   fflush(gLogFile);              
-                   
-  /* Unlock the log file such that other threads can once again utilize it */ 
-  if( flock(gLogFileFd, LOCK_UN) ){
-    printf("Error: Failed to unlock log file, logging to file will fail\n");
-    return;
-  }
+  
   
   return; 
 }

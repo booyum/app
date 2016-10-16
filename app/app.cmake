@@ -2,9 +2,9 @@
 
 project(App)
 
-# The cross platform controller is always utilized
+# The cross platform bootstrapper is always utilized
 list  (APPEND primary_sources 
-      "app/controller/main.c"
+      "app/bootstrap/main.c"
       )
 
 # Cross platform modules are always utilized
@@ -32,6 +32,7 @@ IF (LINUX)
          "app/modules/os/linux/sandbox/isolProc.c"
          "app/modules/os/linux/sandbox/isolGui.c"
          "app/modules/os/unixLike/prng/prng.c"
+         "app/modules/os/unixLike/controller/controller.c"
          )
 ENDIF (LINUX)
 

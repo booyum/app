@@ -18,7 +18,7 @@
 #include "logger.h"
 
 
-static int dataIndependentCmp(unsigned char *x, unsigned char *y, int n);
+
 static int memClear(volatile uint8_t *memoryPointer, size_t bytesize);
 
 /*******************ALLOCATION SECURITY FUNCTIONS******************************/
@@ -425,7 +425,7 @@ int sec32ConstCmp(unsigned char *x, unsigned char *y)
  *
  * Returns 1 on match, 0 on mismatch, -1 on error.
  */
-static int dataIndependentCmp(unsigned char *x, unsigned char *y, int n)
+int dataIndependentCmp(unsigned char *x, unsigned char *y, int n)
 {  
   int checker = 0;
   
