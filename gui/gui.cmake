@@ -2,58 +2,50 @@
 
 project (guiBin)
 
-# The cross platform bootstrapper is always utilized
+# GUI specific libraries
   list  (APPEND gui_sources 
         "gui/bootstrap/main.cxx"
+         "gui/libs/contPortCon.cxx"
         )
 
-# The views are cross platform from FLTK 
+# The GUI views 
   list  (APPEND gui_sources 
         "gui/views/initGui.cxx"
         )
 
-
-# Different window managers are used on the different operating systems 
-IF(LINUX)
+# Window manager support (currently only x11)
   list  (APPEND gui_sources 
         "gui/wms/x11/initWm.cxx"
         "gui/wms/x11/initIsolWin.cxx"
         )
-ENDIF(LINUX) 
 
 
-# Different modules are used on different operating systems
-IF(LINUX)
-  list  (APPEND gui_sources 
-        "gui/modules/os/linux/sandbox/isolKern.cxx"
-        "gui/modules/os/linux/sandbox/isolNet.cxx"
-        "gui/modules/os/linux/sandbox/isolFs.cxx"
-        "gui/modules/os/linux/sandbox/isolName.cxx"
-        "gui/modules/os/linux/sandbox/isolProc.cxx"
-        "gui/modules/os/linux/sandbox/isolIpc.cxx"
-        "gui/modules/os/unixLike/contPortCon/contPortCon.cxx"
-        )
-ENDIF(LINUX)
+# Shared libraries
+list  (APPEND gui_sources 
+      "libs/logger.c" 
+      "libs/security.c"
+      "libs/isolNet.c"
+      "libs/isolFs.c"
+      "libs/isolName.c"
+      "libs/isolProc.c"
+      "libs/isolIpc.c"
+      "libs/net.c"
+      )
 
 
 add_executable(guiBin ${gui_sources})
 
+# Header files can be found here
+target_include_directories(guiBin PUBLIC gui/interfaces)
+target_include_directories(guiBin PUBLIC libs/interfaces)
 
-target_include_directories(guiBin PUBLIC gui/interfaces/)
-target_include_directories(guiBin PUBLIC gui/interfaces/sandbox/)
 
 # We want to make the gui executable in the bins directory 
 set_target_properties( guiBin
     PROPERTIES
-#   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-#   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bins"
 )
 
+# Dynamically linked libraries are used
+target_link_libraries(guiBin "-lseccomp -lcap -lfltk -lXext -lX11 -lm -lXrandr")
 
-
-
-# Depending on the OS different libraries are linked with the binary 
-IF (LINUX)
-  target_link_libraries(guiBin "-lseccomp -lcap -lfltk -lXext -lX11 -lm -lXrandr")
-ENDIF (LINUX)

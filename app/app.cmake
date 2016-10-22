@@ -2,99 +2,43 @@
 
 project(App)
 
-# The cross platform bootstrapper is always utilized
+# App specific libraries
 list  (APPEND primary_sources 
       "app/bootstrap/main.c"
+      "app/libs/controller.c"
       )
 
-# Cross platform modules are always utilized
+# Shared libraries
 list  (APPEND primary_sources 
-      "app/modules/shared/dataContainer/dataContainer.c" 
-      "app/modules/shared/logger/logger.c" 
-      "app/modules/shared/router/router.c"
-      "app/modules/shared/security/security.c"
-      "app/modules/shared/tweetNacl/tweetNacl.c"
+      "libs/logger.c" 
+      "libs/torCon.c"
+      "libs/security.c"
+      "libs/tweetNacl.c"
+      "libs/isolFs.c"
+      "libs/isolIpc.c"
+      "libs/isolName.c"
+      "libs/isolNet.c"
+      "libs/net.c"
+      "libs/isolProc.c"
+      "libs/isolGui.c"
+      "libs/prng.c"
       )
-
-
-# Some interfaces have no possible cross platform implementation, therefore these
-# interfaces are implemented with OS specific modules, we will switch based on 
-# the current OS to determine which OS specific modules to build and utilize for
-# the interface
-
-IF (LINUX)
-    list (APPEND primary_sources
-         "app/modules/os/linux/sandbox/isolFs.c"
-         "app/modules/os/linux/sandbox/isolKern.c"
-         "app/modules/os/linux/sandbox/isolIpc.c"
-         "app/modules/os/linux/sandbox/isolName.c"
-         "app/modules/os/linux/sandbox/isolNet.c"
-         "app/modules/os/linux/sandbox/isolProc.c"
-         "app/modules/os/linux/sandbox/isolGui.c"
-         "app/modules/os/unixLike/prng/prng.c"
-         "app/modules/os/unixLike/controller/controller.c"
-         )
-ENDIF (LINUX)
-
-IF (WIN32)
-    #todo
-ENDIF (WIN32)
-
-IF (appLE)
-    #todo
-ENDIF (appLE)
-
-IF (FREEBSD)
-    #todo
-ENDIF (FREEBSD)
-
-IF (OPENBSD)
-    #todo
-ENDIF (OPENBSD)
 
 
 #set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 add_executable(App ${primary_sources})
 
-# Program interface declarations, which are simply header files, are stored in
-# the 'interfaces' directory, which is itself in the projects root directory. 
-# Adding interface directory with include_directories() allows for us to use the 
-# standard include quote syntax, even though the headers (which define interfaces) 
-# are not being stored in the same directories as the source files (which modularly 
-# define implementations). 
-target_include_directories(App PUBLIC app/interfaces/sandbox)
+# Header files can be found in these directories
 target_include_directories(App PUBLIC app/interfaces) 
+target_include_directories(App PUBLIC libs/interfaces)
+
 
 # We want to make the App executable in the parent directory 
 set_target_properties( App
     PROPERTIES
-#   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-#   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
 )
 
+# Dynamically linked libraries are required
+target_link_libraries(App "-lseccomp -lcap")
 
-
-
-# Modules that are not cross platform require differing libraries to support 
-# them, we will switch based on the current OS to determine which libraries 
-# to link in. 
-IF (LINUX)
-  target_link_libraries(App "-lseccomp -lcap")
-ENDIF (LINUX)
-
-IF (WIN32)
-    #todo
-ENDIF (WIN32)
-
-IF (appLE)
-    #todo
-ENDIF (appLE)
-
-IF (FREEBSD)
-    #todo
-ENDIF (FREEBSD)
-
-IF (OPENBSD)
-    #todo
-ENDIF (OPENBSD)

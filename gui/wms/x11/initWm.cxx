@@ -7,8 +7,12 @@
 #include <unistd.h> 
 
 #include "initWm.h"
-#include "isolFs.h"
-#include "isolKern.h"
+
+
+extern "C"{
+  #include "isolFs.h"
+  #include "logger.h"
+}
 
 static void loopX(Display *dpy, Window root, int randrBase);
 
@@ -28,10 +32,9 @@ int initWm(int (*initGui)(void))
     dpy = XOpenDisplay(0X0);
   }while(!dpy); 
   
-  
   /* Make sure the display supports randr, initialize the randr base codes */ 
   if(!XRRQueryExtension(dpy, &randrBase, &err) || !XRRQueryVersion(dpy, &major, &minor) ){
-    printf("Failed to initialize x11 randr");
+    logErr("Failed to initialize x11 randr");
     return 0;
   }
   
@@ -43,7 +46,7 @@ int initWm(int (*initGui)(void))
     cursor = XCreateFontCursor(dpy, 2);
   }
   catch(...){
-    printf("Error: Initializing a cursor for the window threw an exception\n");
+    logErr("Initializing a cursor for the window threw an exception");
     return 0; 
   }
   /* Use the initialized cursor for the root window of the display */ 
@@ -51,7 +54,7 @@ int initWm(int (*initGui)(void))
     XDefineCursor(dpy, root, cursor);
   }
   catch(...){
-    printf("Error: Associating a cursor with the window threw an exception\n");
+    logErr("Associating a cursor with the window threw an exception");
     return 0; 
   }
   
@@ -65,15 +68,15 @@ int initWm(int (*initGui)(void))
    */
   switch(fork()){
     case -1:
-      printf("Error: Forking to split GUI and WM failed\n");
+      logErr("Forking to split GUI and WM failed");
       return 0; 
     case 0:
       loopX(dpy, root, randrBase); /* never returns */
-      printf("Error: Failed to initialize the window manager\n"); 
+      logErr("Failed to initialize the window manager"); 
       exit(-1); 
     default:
       initGui(); /* never returns */ 
-      printf("Error: Failed to initialize the GUI\n");
+      logErr("Failed to initialize the GUI");
       return 0; 
   }
   
@@ -87,16 +90,16 @@ static void loopX(Display *dpy, Window root, int randrBase)
   XEvent event; 
   
   /* Isolate the x display from the filesystem */ 
-  if( !isolFs(INIT_FSNS) ){
-    printf("Error: Failed to isolate the window manager from the filesystem\n");
+  if( !isolFs("gui_sandbox", INIT_FSNS) ){
+    logErr("Failed to isolate the window manager from the filesystem");
     return; 
   }
   
-  if( !isolKern() ){
-    printf("Error: Failed to isolate GUI from Kernel\n");
-    return; 
-  }
-  
+//  if( !isolKern() ){
+//    logErr("Failed to isolate GUI from Kernel");
+//    return; 
+//  }
+  //TODO isol kern here
   /* Loop waiting for X11 events */ 
   while(1){
     XNextEvent(dpy, &event);

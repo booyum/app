@@ -6,83 +6,112 @@
 #include <stdio.h> 
 #include <string.h>
 
-#include "initIsolWin.h"
-#include "isolFs.h" 
 
+#include "initIsolWin.h"
+
+
+extern "C"{
+  #include "isolFs.h" 
+  #include "logger.h"
+}
 
 static int forkXephyr(void);
 static int seccompWl(void);
-static void isolXephyr(char *xephyrCmd[], char *xephyrEnv[]);
+static void isolXephyr(const char *xephyrCmd[], const char *xephyrEnv[]);
 
 static int setDisplayName(char *dOut, int dOutBc, char *lockStr , int lockStrBc);
 
 
-/* initIsolWin spawns a window that is isolated from the host windowing 
- * system, in this implementation we are using Xephyr to do this.
- */ 
+/* initIsolWin spawns a window that is isolated from the host's windowing 
+ * system. In this implementation we are using Xephyr to do so. 
+ *
+ * Returns 1 on success, 0 on error.
+ */
 int initIsolWin(void)
 {
-  
   if( !forkXephyr() ){
-    printf("Error: Failed to isolate the GUI\n");
+    logErr("Failed to isolate the GUI");
     return 0; 
   }
   
   return 1; 
 }
 
+//todo grab Xephyr location from settings file
 
-
-
-static int forkXephyr(void) //todo grab Xephyr location from settings file
+/* forkXephyr forks the current process and begins the Xephyr isolation from 
+ * the child, the parent sets the DISPLAY environment variable to the available 
+ * display number that is generated for X11 and then returns.
+ *
+ * Returns 1 on success, 0 on error. 
+ */
+static int forkXephyr(void) 
 {
   char xDisplayName[100]; 
   char lockStr[100]; 
   
-  char *xephyrCmd[] = {"Xephyr", "-ac", "-br", "-noreset", "-title", "App", "-nolisten", "tcp", "-resizeable", "-screen", "800X600", xDisplayName, NULL };
-  char *xephyrEnv[] = {"DISPLAY=:0", NULL};
-  
-  
-  /* Get an available valid xDisplayName in the form ":integer" */
+  /* Get an available valid xDisplayName */
   if( !setDisplayName(xDisplayName, 100, lockStr, 100) ){
-    printf("Error: Failed to set a display name for GUI isolation\n");
+    logErr("Failed to set a display name for GUI isolation");
     return 0; 
   }
   
+  /* Xephyr flags + environment variables */
+  const char *xephyrCmd[] = {"Xephyr", "-ac", "-br", "-noreset", "-title", "App", "-nolisten", "tcp", "-resizeable", "-screen", "800X600", (const char*)xDisplayName, NULL };
+  const char *xephyrEnv[] = {"DISPLAY=:0", NULL};
   
+  /* Fork and start the isolation of Xephyr from the child, set the DISPLAY 
+   * environment variable from the parent to that of the Xephyr window the 
+   * the child spawns
+   */ 
   switch( fork() ){
     case -1:{
-      printf("Error: Failed to fork off Xephyr\n");
+      logErr("Failed to fork off Xephyr");
       return 0;
     }
     
     case 0:{
       isolXephyr(xephyrCmd, xephyrEnv); /* This never returns */
-      printf("Error: Failed to isolate Xephyr\n");
+      logErr("Failed to isolate Xephyr");
       return 0;
     }
     
     default:{
       if( setenv("DISPLAY", xDisplayName, 1) ){
-        printf("Error: Failed to set display environment var to xephyr display\n");
+        logErr("Failed to set display environment var to xephyr display #");
         return 0;
       }
-      break;
     }
   }
   
   return 1; 
 }
 
-static void isolXephyr(char *xephyrCmd[], char *xephyrEnv[])
+/* isolXephyr goes about actually bringing up the isolated Xephyr display. 
+ * The Xephyr process is itself isolated from the file system, note that this
+ * actually happens /after/ it is execve such that it has access to the file
+ * system in order to bring in the dynamically linked libraries it requires.
+ *
+ * The mount namespace is initialized prior to a fork, such that both the 
+ * parent and the child fork are in it, Xephyr is execved in the child after
+ * isolating it from kernel syscalls it doesn't need with SECCOMP, then after a 
+ * one second delay the parent isolates entirely from the file system such that 
+ * Xephyr has no access to it other than through its already open file 
+ * descriptors. I've not found a way to make this event driven.
+ *
+ * This function does not return, on error it will fail with a log message,
+ * and the Xephyr Window may not launch, or in the event it does it may not
+ * be isolated from the file system, though hopefully this will never happen. 
+ */
+static void isolXephyr(const char *xephyrCmd[], const char *xephyrEnv[])
 {
   /* Initialize a new mount namespace for Xephyr, we do this here so that after
    * we execve to Xephyr we can then modify this same mount namespace to remove
-   * access to the filesystem. This is done after we execve so that dynamically
+   * access to the file system. This is done after we execve so that dynamically
    * linked libraries and such can be accessed ahead of time.    
    */ 
   if( unshare(CLONE_NEWNS) ){
-    printf("Failed to unshare the filesystem\n");
+    logErr("Failed to unshare the filesystem");
     exit(-1);  
   } 
   
@@ -90,24 +119,22 @@ static void isolXephyr(char *xephyrCmd[], char *xephyrEnv[])
    * previously created mount namespace
    */
   switch( fork() ){
-    /* Failed to fork, exit so no need to break */
+    /* Failed to fork */
     case -1:{
-      printf("Error: Failed to fork for Xephyr\n");
+      logErr("Failed to fork for Xephyr");
       exit(-1);
     } 
     
-    /* The child initializes the xephyr SECCOMP profile and execves xephyr,
-     * Note that this can never fall through so no need for break 
-     */ 
+    /* The child initializes the xephyr SECCOMP profile and execves xephyr */ 
     case 0:{
      /* Initialize the Xephyr SECCOMP whitelist */
       if( !seccompWl() ){
-        printf("Error: Failed to initialize SECCOMP for isolated window\n");
+        logErr("Failed to initialize SECCOMP for isolated window\n");
         exit(-1);  
       }
      
-      if( execve("/usr/bin/Xephyr", xephyrCmd, xephyrEnv) == -1 ){
-        printf("Error: Failed to execve Xephyr\n");
+      if( execve("/usr/bin/Xephyr", (char**)xephyrCmd, (char**)xephyrEnv) == -1 ){
+        logErr("Failed to execve Xephyr");
         exit(-1);
       }
     }
@@ -121,8 +148,8 @@ static void isolXephyr(char *xephyrCmd[], char *xephyrEnv[])
        */
       sleep(1); 
       
-      if( !isolFs(NO_INIT_FSNS) ){
-        printf("Error: Failed to isolate Xephyr from the filesystem\n");
+      if( !isolFs("gui_sandbox", NO_INIT_FSNS) ){
+        logErr("Failed to isolate Xephyr from the filesystem");
         exit(-1); 
       }
       exit(0);
@@ -130,7 +157,7 @@ static void isolXephyr(char *xephyrCmd[], char *xephyrEnv[])
   }
   
   /* We should never actually make it here */
-  printf("A part of code that shouldn't ever be reached was reached anyway\n");
+  logErr("A part of code that shouldn't ever be reached was reached anyway");
   exit(-1); 
 }
 
@@ -158,7 +185,7 @@ static int setDisplayName( char *dOut, int dOutBc, char *lockStr, int lockStrBc)
   
   /* Basic error checking */ 
   if( dOut == NULL || dOutBc == 0 || lockStr == NULL || lockStrBc == 0 ){
-    printf("Error: Something was NULL that shouldn't have been\n");
+    logErr("Something was NULL that shouldn't have been");
     return 0; 
   }
   
@@ -171,21 +198,21 @@ static int setDisplayName( char *dOut, int dOutBc, char *lockStr, int lockStrBc)
     displayName++;
     
     if( displayName == 65535 ){
-      printf("Error: Tried an absurd number of display names and none worked\n");
+      logErr("Tried an absurd number of display names and none worked");
       return 0;
     }
     
     /* Write the current display number to the output buffer with : prepended to it */ 
     checker = snprintf(dOut, dOutBc, ":%u", displayName);
     if( checker >= dOutBc || checker < 0 ){
-      printf("Error: Failed to snprintf the display name integer as an ASCII string\n");
+      logErr("Failed to snlogErr the display name integer as an ASCII string");
       return 0; 
     }
     
     /* Write the path to the ambiguously existing lock file for this display */ 
     checker = snprintf(lockStr, lockStrBc, "/tmp/.X%u-lock", displayName);
     if( checker >= lockStrBc || checker < 0 ){
-      printf("Error: Failed to snprintf the path to the x11 lock file for exist check\n");
+      logErr("Failed to snlogErr the path to the x11 lock file for exist check");
       return 0; 
     } 
     
@@ -214,7 +241,7 @@ static int seccompWl(void)
   /* Initialize SECCOMP filter such that non-whitelisted syscalls segfault */
   filter = seccomp_init(SCMP_ACT_KILL);
   if( filter == NULL ){
-    printf("Error: Failed to initialize a seccomp filter\n");
+    logErr("Failed to initialize a seccomp filter");
     return 0;
   }
 
@@ -303,14 +330,14 @@ static int seccompWl(void)
 
   /* Make sure that all of the SECCOMP rules were correctly added to filter */
   if( ret != 0 ){
-    printf("Error: Failed to initialize seccomp filter\n");
+    logErr("Failed to initialize seccomp filter");
     seccomp_release(filter);
     return 0;
   }
 
   /* Load the SECCOMP filter into the kernel */
   if( seccomp_load(filter) ){
-    printf("Error: Failed to load the seccomp filter into the kernel\n");
+    logErr("Failed to load the seccomp filter into the kernel");
     seccomp_release(filter); 
     return 0; 
   }

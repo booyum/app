@@ -9,8 +9,12 @@
 #include <unistd.h>
 
 #include "initGui.h"
-#include "isolFs.h" 
-#include "isolKern.h" 
+
+
+extern "C"{
+  #include "isolFs.h" 
+  #include "logger.h"
+}
 
 /* GUI Prototypes */
 static void startWindow(void);
@@ -32,7 +36,7 @@ int initGui(void)
   
   /* Initialize a new mount namespace */ 
   if( unshare(CLONE_NEWNS) ){
-    printf("Failed to unshare the filesystem\n");
+    logErr("Failed to unshare the filesystem");
     return 0;  
   } 
   
@@ -43,7 +47,7 @@ int initGui(void)
   
     /* There was an error forking */
     case -1:{
-      printf("Error: Failed to fork for GUI\n");
+      logErr("Failed to fork for GUI");
       exit(-1); 
     }
     
@@ -51,11 +55,12 @@ int initGui(void)
      * it actually runs the GUI toolkit, which should never return 
      */
     case 0:{
-      if( !isolKern() ){
-        printf("Error: Failed to isolate GUI from kernel\n");
-        exit(-1);
-      }
-      
+//TODO isolate kernel here
+//      if( !isolKern() ){
+//        logErr("Failed to isolate GUI from kernel");
+//        exit(-1);
+//      }
+//      
       Fl::run(); /* Never returns */
       exit(-1); 
     }
@@ -65,8 +70,8 @@ int initGui(void)
     
       sleep(1); 
       
-      if( !isolFs(NO_INIT_FSNS) ){
-        printf("Error: Failed to isolate the GUI from the filesystem\n");
+      if( !isolFs("gui_sandbox", NO_INIT_FSNS) ){
+        logErr("Failed to isolate the GUI from the filesystem");
         exit(-1);
       }
       

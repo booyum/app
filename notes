@@ -10,3 +10,5 @@ ensure all snprintfs are checking for truncation and negative returns
 need  libxrandr-dev
 
 apt-get install libcap-dev
+
+CAP_IPC_LOCK + CAP_SYS_ADMIN
