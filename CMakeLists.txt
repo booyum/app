@@ -31,33 +31,5 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -pipe -Wformat-security -Werror=form
 
 #todo add safe stack, etc
 
-########################## DETERMINE OPERATING SYSTEM ##########################
-
-# These environment variables are set by cmake, though APPLE only approximates
-# osx (see cmake documentation, TODO). 
-if (APPLE)
-endif(APPLE)
-
-if (WIN32)
-endif(WIN32)
-
-# This can determine Unix more specifically than cmake natively has defined with
-# UNIX, and were obtained from the following site;
-# 
-# github.com/substack/libssh/blob/master/cmake/Modules/DefinePlatformDefaults.cmake
-if (CMAKE_SYSTEM_NAME MATCHES "Linux")
-    set(LINUX TRUE)
-endif(CMAKE_SYSTEM_NAME MATCHES "Linux")
-
-if (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
-    set(FREEBSD TRUE)
-endif (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
-
-if (CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
-    set(OPENBSD TRUE)
-endif (CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
-
-################################################################################
-
 include("gui/gui.cmake")
 include("app/app.cmake")

@@ -5,7 +5,9 @@ project (guiBin)
 # GUI specific libraries
   list  (APPEND gui_sources 
         "gui/bootstrap/main.cxx"
-         "gui/libs/contPortCon.cxx"
+        "gui/source/contPortCon.cxx"
+        "gui/source/initX11.cxx"
+        "gui/source/isolX11Win.cxx"
         )
 
 # The GUI views 
@@ -13,23 +15,17 @@ project (guiBin)
         "gui/views/initGui.cxx"
         )
 
-# Window manager support (currently only x11)
-  list  (APPEND gui_sources 
-        "gui/wms/x11/initWm.cxx"
-        "gui/wms/x11/initIsolWin.cxx"
-        )
-
 
 # Shared libraries
 list  (APPEND gui_sources 
-      "libs/logger.c" 
-      "libs/security.c"
-      "libs/isolNet.c"
-      "libs/isolFs.c"
-      "libs/isolName.c"
-      "libs/isolProc.c"
-      "libs/isolIpc.c"
-      "libs/net.c"
+      "shared/source/logger.c" 
+      "shared/source/security.c"
+      "shared/source/isolNet.c"
+      "shared/source/isolFs.c"
+      "shared/source/isolName.c"
+      "shared/source/isolProc.c"
+      "shared/source/isolIpc.c"
+      "shared/source/net.c"
       )
 
 
@@ -37,7 +33,7 @@ add_executable(guiBin ${gui_sources})
 
 # Header files can be found here
 target_include_directories(guiBin PUBLIC gui/interfaces)
-target_include_directories(guiBin PUBLIC libs/interfaces)
+target_include_directories(guiBin PUBLIC shared/interfaces)
 
 
 # We want to make the gui executable in the bins directory 

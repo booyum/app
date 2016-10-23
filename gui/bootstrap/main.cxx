@@ -7,8 +7,8 @@
 #include <seccomp.h>
 
 
-#include "initIsolWin.h" 
-#include "initWm.h"
+#include "isolX11Win.h" 
+#include "initX11.h"
 #include "initGui.h"
 #include "contPortCon.h" 
 
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
   }
   
   /* Bring up the isolated Window */
-  if( !initIsolWin() ){
+  if( !isolX11Win() ){
     logErr("Failed to bring up an isolated window");
     return -1; 
   }
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
   } 
   
   /* Initialize the window manager and GUI */ 
-  if( !initWm(&initGui) ){
+  if( !initX11(&initGui) ){
     logErr("Failed to initialize the GUI");
     return -1; 
   }

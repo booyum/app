@@ -1,6 +1,4 @@
 #include "tweetNacl.h"
-#include "prng.h"
-#include "logger.h"
 #define FOR(i,n) for (i = 0;i < n;++i)
 #define sv static void
 
@@ -9,7 +7,7 @@ typedef unsigned long u32;
 typedef unsigned long long u64;
 typedef long long i64;
 typedef i64 gf[16];
-extern int randomize(u8 *,u64);
+extern void randomize(u8 *,u64);
 
 static const u8
   _0[16],
@@ -449,14 +447,9 @@ int crypto_scalarmult_base(u8 *q,const u8 *n)
   return crypto_scalarmult(q,n,_9);
 }
 
-/* Modified to return -1 if randomize fails, crypto_scalarmult_base always
- * returns 0 */ 
 int crypto_box_keypair(u8 *y,u8 *x)
 {
-  if( !randomize(x,32) ){ 
-    logErr("Failed to provide Tweet NACL with randomness");
-    return -1; 
-  }
+  randomize(x,32);
   return crypto_scalarmult_base(y,x);
 }
 
@@ -660,17 +653,13 @@ sv scalarbase(gf p[4],const u8 *s)
   scalarmult(p,q,s);
 }
 
-/* Modified to return -1 if randomize fails */
 int crypto_sign_keypair(u8 *pk, u8 *sk)
 {
   u8 d[64];
   gf p[4];
   int i;
 
-  if( !randomize(sk, 32) ){
-    logErr("Failed to provide Tweet NACL with randomness");
-    return -1; 
-  }
+  randomize(sk, 32);
   crypto_hash(d, sk, 32);
   d[0] &= 248;
   d[31] &= 127;

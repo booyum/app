@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h> 
 
-#include "initWm.h"
+#include "initX11.h"
 
 
 extern "C"{
@@ -17,7 +17,7 @@ extern "C"{
 static void loopX(Display *dpy, Window root, int randrBase);
 
 
-int initWm(int (*initGui)(void))
+int initX11(int (*initGui)(void))
 {
   Display *dpy;
   Window  root;

@@ -8,20 +8,20 @@ list  (APPEND primary_sources
       "app/libs/controller.c"
       )
 
-# Shared libraries
+# Shared source
 list  (APPEND primary_sources 
-      "libs/logger.c" 
-      "libs/torCon.c"
-      "libs/security.c"
-      "libs/tweetNacl.c"
-      "libs/isolFs.c"
-      "libs/isolIpc.c"
-      "libs/isolName.c"
-      "libs/isolNet.c"
-      "libs/net.c"
-      "libs/isolProc.c"
-      "libs/isolGui.c"
-      "libs/prng.c"
+      "shared/source/logger.c" 
+      "shared/source/torCon.c"
+      "shared/source/security.c"
+      "shared/source/tweetNacl.c"
+      "shared/source/isolFs.c"
+      "shared/source/isolIpc.c"
+      "shared/source/isolName.c"
+      "shared/source/isolNet.c"
+      "shared/source/net.c"
+      "shared/source/isolProc.c"
+      "shared/source/isolGui.c"
+      "shared/source/prng.c"
       )
 
 
@@ -29,8 +29,8 @@ list  (APPEND primary_sources
 add_executable(App ${primary_sources})
 
 # Header files can be found in these directories
-target_include_directories(App PUBLIC app/interfaces) 
-target_include_directories(App PUBLIC libs/interfaces)
+target_include_directories(App PUBLIC app/libs/interfaces) 
+target_include_directories(App PUBLIC shared/interfaces)
 
 
 # We want to make the App executable in the parent directory 

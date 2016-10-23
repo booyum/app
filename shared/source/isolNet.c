@@ -15,7 +15,7 @@
 #include "security.h"
 #include "logger.h"
 #include "settings.h"
-#include "unixNet.h"
+#include "net.h"
 
 enum{ SA_DATA_BC = 14, NS = 0, TOR = 1};
 

@@ -7,7 +7,7 @@
 #include <string.h>
 
 
-#include "initIsolWin.h"
+#include "isolX11Win.h"
 
 
 extern "C"{
@@ -22,12 +22,12 @@ static void isolXephyr(const char *xephyrCmd[], const char *xephyrEnv[]);
 static int setDisplayName(char *dOut, int dOutBc, char *lockStr , int lockStrBc);
 
 
-/* initIsolWin spawns a window that is isolated from the host's windowing 
+/* isolX11Win spawns a window that is isolated from the host's windowing 
  * system. In this implementation we are using Xephyr to do so. 
  *
  * Returns 1 on success, 0 on error.
  */
-int initIsolWin(void)
+int isolX11Win(void)
 {
   if( !forkXephyr() ){
     logErr("Failed to isolate the GUI");
