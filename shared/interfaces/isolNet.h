@@ -10,4 +10,4 @@ enum{ REDIRECT = 1, SIMPLE = 0 };
  * devices, including from their MAC addresses, with all connections to the Tor
  * SocksPort going through a Unix Domain Socket connection.
  */
-int isolNet(int initRedirector);
+int isolNet(int redirect);

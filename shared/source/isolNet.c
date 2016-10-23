@@ -1,5 +1,7 @@
 #define _GNU_SOURCE
 
+#include <stdio.h>
+
 #include <seccomp.h>
 #include <sys/mman.h>
 #include <sched.h>
@@ -42,12 +44,12 @@ static int stoplight[2];
 /* isolNet initializes the network isolation. It returns 1 on success, 
  * and 0 on error.
  */ 
-int isolNet(int initRedirector)
+int isolNet(int redirect)
 {
   char throwAway[1]; 
   
-  /* Make sure the initRedirector value is valid */
-  if( initRedirector != REDIRECT && initRedirector != SIMPLE ){
+  /* Make sure the redirect value is valid */
+  if( redirect != REDIRECT && redirect != SIMPLE ){
     logErr("The value passed to isolNet was invalid");
     return 0; 
   }
@@ -55,7 +57,7 @@ int isolNet(int initRedirector)
   /* If we are simply to initialize the network namespace without a redirector 
    * then do so, otherwise we continue on for the redirection logic
    */ 
-  if( initRedirector == SIMPLE ){
+  if( redirect == SIMPLE ){
     if( unshare(CLONE_NEWNET) ){
       logErr("unshare clone_newnet failed");
       return 0;
