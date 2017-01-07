@@ -12,3 +12,6 @@ need  libxrandr-dev
 apt-get install libcap-dev
 
 CAP_IPC_LOCK + CAP_SYS_ADMIN
+
+
+need libcryptsetup-dev

@@ -43,5 +43,5 @@ set_target_properties( guiBin
 )
 
 # Dynamically linked libraries are used
-target_link_libraries(guiBin "-lseccomp -lcap -lfltk -lXext -lX11 -lm -lXrandr")
+target_link_libraries(guiBin "-lseccomp -lcap -lfltk -lXext -lX11 -lm -lXrandr -lpthread")
 

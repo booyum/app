@@ -82,7 +82,7 @@ void *allocMemoryPane(size_t bytesRequested)
   
 
   /* Allocate the requiredPages * pageBytesize bytes of memory. mmap guarantee
-   * page alignment allowing for mprotect, allocating the memory originally 
+   * page alignment allowing for mprotect, allocating the memory initially 
    * to write and read capable 
    */   
   memoryPane = mmap( NULL, 
@@ -94,7 +94,8 @@ void *allocMemoryPane(size_t bytesRequested)
     logErr("Failed to mmap memory for the memoryPane");
     return NULL;  
   }   
-
+  
+  
   return memoryPane;                                    
 }
 
@@ -195,7 +196,6 @@ void *secAlloc(size_t bytesRequested)
     if(bytesRequested % pageBytesize) requiredPages++;
   }
   
-
   /* We can compute the total allocation bytesize by multiplying the previously
    * computed requiredPages by pageBytesize, however first ensure that this
    * multiplication operation will not wrap around. 
@@ -206,14 +206,14 @@ void *secAlloc(size_t bytesRequested)
   }
   
   /* Allocate the required memory pages, aligned to page boundaries such that 
-   * we can use mprotect on them, with mmap for poxic compliance, 
+   * we can use mprotect on them, with mmap for posix compliance, 
    */ 
   memBuff = mmap( NULL, 
                   requiredPages * pageBytesize, 
                   PROT_WRITE | PROT_READ, 
                   MAP_PRIVATE | MAP_ANONYMOUS, 
                   -1, 0 ); 
-  if( memBuff == NULL ){
+  if( memBuff == MAP_FAILED ){
     logErr("Failed to allocate memory");
     return NULL; 
   }  
@@ -227,13 +227,13 @@ void *secAlloc(size_t bytesRequested)
       mprotect(memBuff + ((requiredPages - 1) * pageBytesize), 1, PROT_NONE)
     ){
     logErr("Failed to initialize page guards");
-    free(memBuff); 
+    munmap(memBuff, requiredPages * pageBytesize); 
     return NULL;
   }
   
   /* NULL fill the pages that are not guards */   
   memset(memBuff + pageBytesize, '\0', (requiredPages - 2) * pageBytesize );
-    
+  
   /* Return a pointer to first non-poisoned byte */
   return memBuff + pageBytesize; 
 }
@@ -283,6 +283,29 @@ int secMemClear(volatile uint8_t *memoryPointer, size_t bytesize)
 
 /***************************FREE SECURITY FUNCTIONS****************************/
 
+
+/* paneFree is the free function for memory allocated with allocMemoryPane. 
+ * When passed a pointer to a pointer returned by allocMemoryPane, it will free
+ * the memory pointed to, remove the pointer from the pointer tracker table, and
+ * set the pointer to NULL. NOTE currently not attempting to zero the pane because
+ * it may be set to read only, need to consider if I should make it readable here
+ * in furtherance of zeroing it.
+ */
+int paneFree(void **ptrPtr)
+ {
+  /* Basic error checking */
+  if( ptrPtr == NULL || *ptrPtr == NULL ){
+    logErr("Something was NULL that shouldn't have been");
+    return 0;
+  }
+  
+  free(*ptrPtr);
+  
+  *ptrPtr = NULL;
+  
+  return 1;
+}
+ 
 /* secFree is the free function for memory allocated with secAlloc. When passed
  * a pointer to a pointer pointing to the first non-poisoned byte of memory 
  * allocated with secAlloc, secFree will clear bytesize bytes (which should be
@@ -319,15 +342,15 @@ int secFree(void **dataBuffer, size_t bytesize)
     logErr("Failed to clear memory buffer"); 
     return 0; 
   }  
-                
+  
   /* Free the memory starting from the first byte of the first page guard. 
    * Keep in mind that this is the free coupled with secAlloc, which uses page
    * guards. 
    */
-  free( *dataBuffer - sysconf(_SC_PAGESIZE) );  
-      
+  munmap(*dataBuffer - sysconf(_SC_PAGESIZE), (sysconf(_SC_PAGESIZE) * 2) + bytesize ); 
+  
   /*Set the pointer pointed to by dataBuffer to NULL, in compliance with 
-   * MEM01-C */
+   *MEM01-C */
   *dataBuffer = NULL; 
   
   return 1; 
@@ -493,7 +516,26 @@ inline int secto_add_int(signed int x, signed int y)
   if(x < 0 && y < INT_MIN - x) return 0;
   return 1;
 }
- 
+
+
+/* Determines if multiplication will wrap around */ 
+int secto_mul_uint32t(uint32_t x, uint32_t y)
+{
+  if( x == 0 || y == 0 ) return 1;
+  return (UINT32_MAX / x) >= y; 
+}
+
+
+/* Determines if multiplication will wrap around */ 
+int secto_mul_uint64t(uint64_t x, uint64_t y)
+{
+  if( x == 0 || y == 0 ) return 1;
+  return (UINT64_MAX / x) >= y; 
+}
+
+
+
+
 /* secto_add_uint determines if it is safe to add the unsigned int x to the 
  * unsigned int y, without wrap around.
  *

@@ -6,6 +6,7 @@
 #include <sys/mman.h>
 #include <sys/types.h>     
 #include <sys/socket.h>
+#include <stdio.h>
 
 #include "isolProc.h"
 #include "isolFs.h"
@@ -45,12 +46,6 @@ int main()
  */
 static int bootstrap(void)
 {
-  /* Prevent unexpected forensic traces by disabling core dumps and paging */
-  if( !mitigateForensicTraces() ){
-    logErr("Failed to disable core dumps / swapping to counter disk forensics");
-    return 0; 
-  }
-  
   /* Prepare the sandbox directory */
   if( !prepSandbox("sandbox") ){
     logErr("Failed to prepare the sandbox directory");
@@ -97,7 +92,16 @@ static int initIsolation()
  * the spawned redirector process is also isolated, however it uses its own 
  * kernel isolation and therefore isolKern is called after it. 
  */ 
-
+  
+  /* Prevent unexpected forensic traces by disabling core dumps and paging */
+  if( !mitigateForensicTraces() ){
+    logErr("Failed to disable core dumps / swapping to counter disk forensics");
+    return 0; 
+  }
+  
+  //TODO mitigate here because not preserved over forks, execves, etc, should 
+  //wrap all of these functions with mitigateForensicTraces versions 
+  
   /* Isolate the process to the sandbox directory (new root on Unix) */ 
   if( !isolFs("sandbox", INIT_FSNS) ){
     logErr("Failed to isolate the filesystem");
@@ -123,10 +127,10 @@ static int initIsolation()
   }
   
   /* Isolate the process from kernel functionality */ 
-/*  if( !isolKern() ){*/
-/*    logErr("Failed to isolate kernel functionality");*/
-/*    return 0; */
-/*  }*/
+  if( !isolKern() ){
+    logErr("Failed to isolate kernel functionality");
+    return 0; 
+  }
   
   return manageControlPort(); 
 }
@@ -233,9 +237,15 @@ static int isolKern(void)
 
   /* Poll is used for managing the sockets */
   ret |= seccomp_rule_add(filter, SCMP_ACT_ALLOW , SCMP_SYS(poll), 0);
-
+  
   /* For now generically whitelisting connect, maybe restrict more later */
   ret |= seccomp_rule_add( filter, SCMP_ACT_ALLOW, SCMP_SYS(connect), 0);
+  
+  /* For now generically whitelisting accept, maybe restrict more later */
+  ret |= seccomp_rule_add( filter, SCMP_ACT_ALLOW, SCMP_SYS(accept), 0);
+  
+  /* Fork needs clone */
+  ret |= seccomp_rule_add( filter, SCMP_ACT_ALLOW, SCMP_SYS(clone), 0);
 
 
   /*******************************MEMORY SYSCALLS******************************/ 

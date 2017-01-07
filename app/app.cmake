@@ -40,5 +40,5 @@ set_target_properties( App
 )
 
 # Dynamically linked libraries are required
-target_link_libraries(App "-lseccomp -lcap")
+target_link_libraries(App "-lseccomp -lcap -lpthread")
 

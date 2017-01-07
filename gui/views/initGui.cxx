@@ -4,6 +4,9 @@
 #include <FL/Fl_Button.H> 
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Tabs.H>
+#include <FL/Fl_Text_Buffer.H>
+#include <FL/Fl_Text_Display.H>
+#include <FL/Fl_Text_Editor.H>
 #include <sched.h> 
 
 #include <unistd.h>
@@ -82,6 +85,7 @@ int initGui(void)
   return 0; 
 }
 
+Fl_Tabs *tabs;
 
 
 static void startWindow(void)
@@ -104,38 +108,38 @@ static void startWindow(void)
   
 
   
-  
-  Fl_Tabs *tabs = new Fl_Tabs(0,0,100,100);
+  Fl_Group *grp1;
+   tabs = new Fl_Tabs(20, 20, w , h );
 {
-    Fl_Group *grp1 = new Fl_Group(20,30,280,170,"Tab1");
+    grp1 = new Fl_Group(40,50,w - 10 ,h - 10  ,"Accounts");
     {
-          Fl_Button *button = new Fl_Button(25, 35, 50, 50, "new");
+      Fl_Text_Buffer *buff = new Fl_Text_Buffer();
+       Fl_Text_Editor *test = new Fl_Text_Editor(60, 70, 200, 400);
+      test->buffer(buff); 
   
+   Fl_Button *button = new Fl_Button(25, 35, 10, 10, "new");
+   
   /* Note that button must take focus to force the mouse to work after 
    * mount namespace is later disconnected from the file system. This did
    * not work when done with inputs however, perhaps other widgets can be used
    * but if all else fails this works.
    */ 
-  button->take_focus(); 
+ button->take_focus(); 
     }
     grp1->end();
-    Fl_Group *grp2 = new Fl_Group(20,30,280,170,"Tab2");
-    {
-        
-    }
-    grp2->end();
 }
 tabs->end();
+tabs->resizable(grp1); 
 
-
-  
+  window->default_cursor(FL_CURSOR_DEFAULT);
   /* Done adding widgets */ 
   window->end();
   
-  window->resizable(); 
+
   /* Show the window */ 
   window->show();
   
+
 
   /* And we are done */ 
   return;
@@ -155,6 +159,8 @@ static int resize(int a)
   
   /* Have the window take up the entire screen size */ 
   window->resize(x,y,w,h);
+  
+  tabs->resize(0, 0, w, h);
   
   /* Return signal indicating that we handled the screen size changing event */ 
   return FL_SCREEN_CONFIGURATION_CHANGED;

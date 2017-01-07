@@ -21,7 +21,6 @@ int initX11(int (*initGui)(void))
 {
   Display *dpy;
   Window  root;
-  Cursor  cursor; 
   int     randrBase;
   int     err;
   int     major;
@@ -40,23 +39,6 @@ int initX11(int (*initGui)(void))
   
   /* Initialize the root window of the display */ 
   root = DefaultRootWindow(dpy);
-  
-  /* Initialize a cursor */
-  try{ 
-    cursor = XCreateFontCursor(dpy, 2);
-  }
-  catch(...){
-    logErr("Initializing a cursor for the window threw an exception");
-    return 0; 
-  }
-  /* Use the initialized cursor for the root window of the display */ 
-  try{
-    XDefineCursor(dpy, root, cursor);
-  }
-  catch(...){
-    logErr("Associating a cursor with the window threw an exception");
-    return 0; 
-  }
   
   /* Register RRScreenChangeNotify Event on root window of display,
    * such that we receive this event on resolution changes (resizes) 

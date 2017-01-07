@@ -15,6 +15,7 @@ int secMemClear(volatile uint8_t *memoryPointer, size_t bytesize);
 
 /***************************FREE SECURITY FUNCTIONS****************************/
 int secFree(void **dataBuffer, size_t bytesize);
+int paneFree(void **ptrPtr);
 
 /***********************STRING SECURITY FUNCTIONS******************************/
 char *secStrCpy(char *dst, char *src, size_t dstBytesize);
@@ -29,6 +30,8 @@ int secto_sizet_add_nowrap(size_t x, size_t y);
 int secto_sizet_mul_nowrap(size_t x, size_t y);
 int secto_add_int(signed int x, signed int y);
 int secto_add_uint(unsigned int x, unsigned int y);
+int secto_mul_uint32t(uint32_t x, uint32_t y);
+int secto_mul_uint64t(uint64_t x, uint64_t y);
 
 /**************************SYSTEM SECURITY FUNCTIONS***************************/
 int mitigateForensicTraces(void);

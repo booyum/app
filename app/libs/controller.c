@@ -152,9 +152,11 @@ int manageControlPort(void)
       fflush(stdout); 
       continue;
     }
+
     
     /* Make a new thread for managing this control session */ 
     switch( fork() ){
+    
       /* If we had an error forking go back and try a new connection */ 
       case -1:{
         logWrn("Failed to fork for the control port");

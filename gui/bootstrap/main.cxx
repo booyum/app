@@ -22,6 +22,8 @@ extern "C"{
 
 /* Simple bootstrapper to initialize the window manager and GUI */ 
 
+int isolKern(void);
+
 /* Enums for the positions of argv */
 enum{ CONT_PORT_TOKEN = 1 }; 
 
